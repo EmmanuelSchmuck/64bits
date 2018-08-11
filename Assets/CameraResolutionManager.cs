@@ -7,10 +7,21 @@ public class CameraResolutionManager : MonoBehaviour
     public UnityEngine.UI.RawImage screenRawImage;
     private new Camera camera;
 
+    public Vector2Int aspectRatio;
+
     public int maxSize = 64;
     public int minSize = 16;
     public int currentSize = 64;
     public int sizeDelta = 4;
+
+    [Header("Time Evolution")]
+    public bool evolveWithTime;
+    public float refreshTimer;
+    public bool randomResolution;
+    public float minRandom, maxRandom;
+    public AnimationCurve normalizedResolutionOverTime;
+    public float cycleDuration;
+    public bool loop;
 
     private void Awake()
     {
@@ -21,13 +32,35 @@ public class CameraResolutionManager : MonoBehaviour
     void Start()
     {
         UpdateResolution(currentSize);
+        if (evolveWithTime) TriggerEvolution();
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        //if (Input.GetKey(KeyCode.KeypadPlus)|| Input.GetAxisRaw("Mouse ScrollWheel")>0) UpdateResolution(currentSize + sizeDelta);
-        //if (Input.GetKey(KeyCode.KeypadMinus) || Input.GetAxisRaw("Mouse ScrollWheel") < 0) UpdateResolution(currentSize - sizeDelta);
+    public void TriggerEvolution() {
+        StopAllCoroutines();
+        StartCoroutine(EvolveWithTime());
+    }
+
+    public IEnumerator EvolveWithTime() {
+
+        float timer = 0f;
+        float lastTime = Time.time;
+        bool evolve = true;
+        while (evolveWithTime && evolve) {
+
+            timer += Time.time - lastTime;
+            lastTime = Time.time;
+            if (timer > cycleDuration)
+            {
+                if (loop) timer = 0f;
+                else evolve = false;
+            }
+            float resolutionNormalized = randomResolution ? Random.Range(minRandom, maxRandom) : normalizedResolutionOverTime.Evaluate(timer / cycleDuration);
+
+            UpdateResolutionNormalized(resolutionNormalized);
+
+            yield return new WaitForSeconds(refreshTimer);
+        }
+        UpdateResolution(maxSize);
     }
 
     public void UpdateResolutionNormalized(float normalizedSize) {
@@ -46,7 +79,11 @@ public class CameraResolutionManager : MonoBehaviour
         //RenderTextureDescriptor desc = new RenderTextureDescriptor(currentSize, currentSize);
         //desc.msaaSamples = 1;
 
-        RenderTexture tex = new RenderTexture(currentSize, currentSize, 32);
+        int biggest = aspectRatio.x > aspectRatio.y ? aspectRatio.x : aspectRatio.y;
+        int width = (int)(currentSize * (float)aspectRatio.x / biggest);
+        int height = (int)(currentSize * (float)aspectRatio.y / biggest);
+
+        RenderTexture tex = new RenderTexture(width, height, 32);
         tex.filterMode = FilterMode.Point;
 		tex.depth = 32;
 		

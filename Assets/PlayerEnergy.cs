@@ -11,12 +11,14 @@ public class PlayerEnergy : MonoBehaviour {
 
     public float currentEnergy;
 
+    public bool fillAtStart;
+
     public CameraResolutionManager cameraResolution;
 
 	// Use this for initialization
 	void Start () {
 
-        UpdateEnergy(fullEnergy);
+        if(fillAtStart) UpdateEnergy(fullEnergy);
 		
 	}
 	
