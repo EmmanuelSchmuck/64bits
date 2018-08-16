@@ -8,7 +8,7 @@ public class PlayerController : MonoBehaviour
     public UnityEngine.PostProcessing.PostProcessManager ppManager;
     public UnityEngine.Audio.AudioMixerGroup audioMaster;
     public UnityEngine.Audio.AudioMixerGroup audioUnderwater;
-    public AudioSource audioRegular, audioAlternate;
+    public AudioGroup audioRegular, audioAlternate;
     public ParticleSystem clouds;
     public ParticleSystem snow;
 
@@ -61,17 +61,16 @@ public class PlayerController : MonoBehaviour
             underwater = true;
             ppManager.OnEnteringWater();
             RenderSettings.fogColor = waterFogColor;
-            audioRegular.outputAudioMixerGroup = audioUnderwater;
-            audioAlternate.outputAudioMixerGroup = audioUnderwater;
+            audioRegular.SetAudioMixerGroup(audioUnderwater);
+            audioAlternate.SetAudioMixerGroup(audioUnderwater);
         }
         else if (cameraHeight > 0 && underwater)
         {
             underwater = false;
             ppManager.OnExitingWater();
             RenderSettings.fogColor = baseFogColor;
-            audioRegular.outputAudioMixerGroup = audioMaster;
-            audioAlternate.outputAudioMixerGroup = audioMaster;
-
+            audioRegular.SetAudioMixerGroup(audioMaster);
+            audioAlternate.SetAudioMixerGroup(audioMaster);
         }
     }
 

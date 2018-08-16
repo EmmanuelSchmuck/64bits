@@ -31,6 +31,8 @@ public class GameController : MonoBehaviour
 	void Start()
 	{
 
+		inputField.text = "";
+		inputField.transform.GetChild(0).GetComponent<Text>().text = "";
 		menu.SetActive(false);
 
 		GenerateNewRandomWorld(true);
@@ -49,6 +51,11 @@ public class GameController : MonoBehaviour
 			else OpenMenu();
 		}
 
+			if (Input.GetKeyDown(exitKey))
+		{
+			Application.Quit();
+		}
+
 	}
 
 	private void OpenMenu()
@@ -59,11 +66,12 @@ public class GameController : MonoBehaviour
 		//inputField.OnDeselect(new BaseEventData(EventSystem.current));
 		//inputField.Select();
 		inputField.ActivateInputField();
+		//inputField.text = currentSeed.ToString();
 
 		//Time.timeScale = 0f;
 		//player.GetComponent<UnityStandardAssets.Characters.FirstPerson.FirstPersonController>().enabled = false;
 
-		newSeedText.text = "";
+		//newSeedText.text = currentSeed.ToString();
 	}
 
 	private void CloseMenu()
@@ -72,8 +80,8 @@ public class GameController : MonoBehaviour
 		{
 			int newSeed = int.Parse(inputField.text);
 			inputField.text = "";
-
-			GenerateNewWorld(newSeed);
+			if(newSeed != currentSeed) 	GenerateNewWorld(newSeed);
+		
 		}
 		//inputField.
 		
@@ -85,9 +93,8 @@ public class GameController : MonoBehaviour
 
 	private void GenerateNewWorld(int seed, bool gameStart = false)
 	{
-
 		currentSeed = seed;
-		currentSeedText.text = currentSeed.ToString();
+		currentSeedText.text = "Island " + currentSeed.ToString();
 		WorldGenerator.Instance.StartGeneration(currentSeed, gameStart);
 
 	}

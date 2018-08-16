@@ -10,6 +10,8 @@ public class WorldGenerator : MonoBehaviour
 {
     public Transform instancedObjects;
 
+    public AudioGroup audioRegular, audioAlternate;
+
     public Material sky;
     public GameObject temple;
 
@@ -22,8 +24,14 @@ public class WorldGenerator : MonoBehaviour
     public PostProcessingProfile waterPP;
     public PostProcessingProfile mainPP;
 
-
+    public bool useNPC;
     public NPC_Navigation[] NPCs;
+
+    [Header("Music")]
+
+    public int minMusicAmount = 2;
+    public int maxMusicAmount = 4;
+
 
     [Header("Sky")]
 
@@ -105,7 +113,7 @@ public class WorldGenerator : MonoBehaviour
 
     private Vector3 terrainSizeOverride;
 
-	public bool IsGenerating {get; set;}
+    public bool IsGenerating { get; set; }
 
     public static WorldGenerator Instance;
 
@@ -119,7 +127,7 @@ public class WorldGenerator : MonoBehaviour
 
     private void Update()
     {
-        if (generate) StartGeneration(Random.Range(0,999), false); generate = false;
+        if (generate) StartGeneration(Random.Range(0, 999), false); generate = false;
     }
 
     public void StartGeneration(int seed, bool gameStart = false)
@@ -133,11 +141,11 @@ public class WorldGenerator : MonoBehaviour
 
     private IEnumerator Generate(int seed, bool gameStart)
     {
-		Debug.Log("GENERATING WITH SEED = " + seed);
-		IsGenerating = true;
+        Debug.Log("GENERATING WITH SEED = " + seed);
+        IsGenerating = true;
 
-        
-		//Debug.Log("random value : " + Random.Range(0,999));
+
+        //Debug.Log("random value : " + Random.Range(0,999));
 
         //instancedObjects = Instantiate(new GameObject("InstancedObjects"), this.transform).transform;
 
@@ -153,7 +161,23 @@ public class WorldGenerator : MonoBehaviour
 
         CleanUp();
 
-		Random.InitState(seed);
+        Random.InitState(seed);
+
+        audioRegular.StopAll();
+        //audioRegular.StopAll();
+
+        List<int> musicIndexes = new List<int>() { 0, 1, 2, 3, 4, 5, 6 };
+        int musicAmount = Random.Range(minMusicAmount, maxMusicAmount + 1);
+        int pitchIndex = Random.Range(0, audioRegular.maxPitchIndex);
+        for (int i = 0; i < musicAmount; i++)
+        {
+            int musicIndex = musicIndexes[Random.Range(0, musicIndexes.Count)];
+            musicIndexes.Remove(musicIndex);
+            
+            audioRegular.SetupMusic(musicIndex, pitchIndex);
+            audioAlternate.SetupMusic(musicIndex, pitchIndex);
+        }
+
 
         if (modifyPP)
         {
@@ -187,7 +211,7 @@ public class WorldGenerator : MonoBehaviour
         }
 
         Color skyColor = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue, skyValue);
-     
+
         sky.SetColor("_SkyTint", skyColor);
 
 
@@ -272,7 +296,7 @@ public class WorldGenerator : MonoBehaviour
 
         terrain.terrainData.SetAlphamaps(0, 0, alphaMap);
 
-       // Debug.Log("Generating detail map...");
+        // Debug.Log("Generating detail map...");
 
         int detailMapWidth = terrain.terrainData.detailWidth;
 
@@ -349,11 +373,13 @@ public class WorldGenerator : MonoBehaviour
             Quaternion rotation = Quaternion.Euler(0f, Random.Range(0, 360), 0f);
             GameObject ruin = Instantiate(ruinPrebab, position, rotation, instancedObjects);
         }
-
+        
         for (int i = 0; i < NPCs.Length; i++)
         {
+            NPCs[i].gameObject.SetActive(useNPC);
+           
             float azimuth = Random.Range(0f, 360f) * Mathf.Deg2Rad;
-            float distance = Mathf.Lerp(minDistanceNormalized, maxDistanceNormalized, (float)i / ( NPCs.Length - 1));
+            float distance = Mathf.Lerp(minDistanceNormalized, maxDistanceNormalized, (float)i / (NPCs.Length - 1));
             Vector3 position = new Vector3(distance * Mathf.Cos(azimuth), 0f, distance * Mathf.Sin(azimuth));
             //position.y = terrain.terrainData.GetHeight((int)position.x, (int)position.z);
             position.x = position.x * terrainSizeOverride.x * 0.5f + terrainCenterWorldPos.x;
@@ -364,10 +390,10 @@ public class WorldGenerator : MonoBehaviour
             NPCs[i].transform.position = position;
         }
 
+        if(useNPC) StartCoroutine(BuildNavmesh(terrain.GetComponent<NavMeshSurface>()));
+        
 
-        StartCoroutine(BuildNavmesh(terrain.GetComponent<NavMeshSurface>()));
-
-		IsGenerating = false;
+        IsGenerating = false;
 
     }
 
@@ -410,7 +436,7 @@ public class WorldGenerator : MonoBehaviour
 
         }
 
-		
+
     }
 
     // creates the navmesh data

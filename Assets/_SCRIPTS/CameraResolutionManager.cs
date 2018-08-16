@@ -6,7 +6,7 @@ public class CameraResolutionManager : MonoBehaviour
 {
     public UnityEngine.UI.RawImage screenRawImage;
     private new Camera camera;
-    public AudioSource audioRegular, audioAlternate;
+    public AudioGroup audioRegular, audioAlternate;
 
     public Vector2Int aspectRatio;
 
@@ -86,8 +86,8 @@ public class CameraResolutionManager : MonoBehaviour
 
         //audio
         //audioMixer.SetFloat("DistortionValue", audioDistortCurve.Evaluate((float)currentSize/maxSize));
-        audioRegular.volume = (float)currentSize / maxSize;
-        audioAlternate.volume = 1f - (float)currentSize / maxSize;
+        audioRegular.SetVolume((float)currentSize / maxSize);
+        audioAlternate.SetVolume(1f - (float)currentSize / maxSize);
 
 
 
