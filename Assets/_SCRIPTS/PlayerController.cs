@@ -82,9 +82,9 @@ public class PlayerController : MonoBehaviour
 
     private void OnTriggerEnter(Collider col)
     {
-        if (col.CompareTag("Bounds"))
+        if (col.CompareTag("Bounds") || col.CompareTag("NPC"))
         {
-            WorldGenerator.Instance.StartGeneration();
+            GameController.Instance.GenerateNewRandomWorld();
         }
     }
 }

@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 114158922866404836}
   m_Layer: 0
   m_Name: NPC
-  m_TagString: Untagged
+  m_TagString: NPC
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -69,7 +69,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1979640565779616}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 698.80005, y: 300.937, z: 402.80002}
+  m_LocalPosition: {x: 703.1882, y: 339.86404, z: 729.89557}
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_Children:
   - {fileID: 4106472496123084}

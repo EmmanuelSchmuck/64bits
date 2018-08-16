@@ -105,6 +105,8 @@ public class WorldGenerator : MonoBehaviour
 
     private Vector3 terrainSizeOverride;
 
+	public bool IsGenerating {get; set;}
+
     public static WorldGenerator Instance;
 
     void Awake() => Instance = this;
@@ -112,26 +114,30 @@ public class WorldGenerator : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-        StartGeneration(gameStart: true);
+        //StartGeneration(gameStart: true);
     }
 
     private void Update()
     {
-        if (generate || Input.GetKeyDown(KeyCode.G)) StartGeneration(false); generate = false;
+        if (generate) StartGeneration(Random.Range(0,999), false); generate = false;
     }
 
-    public void StartGeneration(bool gameStart = false)
+    public void StartGeneration(int seed, bool gameStart = false)
     {
         StopAllCoroutines();
 
-        StartCoroutine(Generate(gameStart));
+        StartCoroutine(Generate(seed, gameStart));
 
         Debug.Log("Starting generation...");
     }
 
-    public IEnumerator Generate(bool gameStart)
+    private IEnumerator Generate(int seed, bool gameStart)
     {
+		Debug.Log("GENERATING WITH SEED = " + seed);
+		IsGenerating = true;
+
         
+		//Debug.Log("random value : " + Random.Range(0,999));
 
         //instancedObjects = Instantiate(new GameObject("InstancedObjects"), this.transform).transform;
 
@@ -139,13 +145,15 @@ public class WorldGenerator : MonoBehaviour
 
         if (Application.isPlaying && animateCameraResolution)
         {
-            Debug.Log("Triggering camera effect...");
+            //Debug.Log("Triggering camera effect...");
             player.GetComponentInChildren<CameraResolutionManager>().TriggerEvolution(gameStart);
-            if (!gameStart) yield return new WaitForSeconds(5f);
+            if (!gameStart) yield return new WaitForSeconds(player.GetComponentInChildren<CameraResolutionManager>().cycleDuration / 2f);
 
         }
 
         CleanUp();
+
+		Random.InitState(seed);
 
         if (modifyPP)
         {
@@ -191,7 +199,7 @@ public class WorldGenerator : MonoBehaviour
         int heightCurveIndex = Random.Range(0, radialHeightFactor.Length);
 
 
-        Debug.Log("Generating heightmap...");
+        // Debug.Log("Generating heightmap...");
 
         int heightMapWidth = terrain.terrainData.heightmapWidth;
         terrainSizeOverride = new Vector3(terrainSizeXZ, baseAltitude, terrainSizeXZ);
@@ -219,7 +227,7 @@ public class WorldGenerator : MonoBehaviour
 
         terrain.terrainData.SetHeights(0, 0, heightMap);
 
-        Debug.Log("Generating alpha map...");
+        //Debug.Log("Generating alpha map...");
 
         int alphaMapWidth = terrain.terrainData.alphamapWidth;
         int alphaTextureCount = 3;
@@ -264,7 +272,7 @@ public class WorldGenerator : MonoBehaviour
 
         terrain.terrainData.SetAlphamaps(0, 0, alphaMap);
 
-        Debug.Log("Generating detail map...");
+       // Debug.Log("Generating detail map...");
 
         int detailMapWidth = terrain.terrainData.detailWidth;
 
@@ -295,7 +303,7 @@ public class WorldGenerator : MonoBehaviour
 
         if (moveTemple)
         {
-            Debug.Log("Placing temple...");
+            //Debug.Log("Placing temple...");
 
             float templeHeight = 0f + terrain.terrainData.GetHeight(heightMapWidth / 2, heightMapWidth / 2);
             Vector3 position = terrainCenterWorldPos + Vector3.up * templeHeight;
@@ -304,14 +312,14 @@ public class WorldGenerator : MonoBehaviour
 
         if (movePlayer)
         {
-            Debug.Log("Placing player...");
+            //Debug.Log("Placing player...");
 
             player.transform.position = playerSpawn.position;
         }
 
         if (moveWater)
         {
-            Debug.Log("Placing water...");
+            //Debug.Log("Placing water...");
 
             float waterHeight = waterHeightNormalized * terrainSizeOverride.y;
             Vector3 position = terrainCenterWorldPos + Vector3.up * waterHeight;
@@ -323,7 +331,7 @@ public class WorldGenerator : MonoBehaviour
 
         // ruins ============================
 
-        Debug.Log("Placing ruins...");
+        //Debug.Log("Placing ruins...");
 
         int ruinAmount = ruinAmounts[Random.Range(0, ruinAmounts.Length)];
 
@@ -359,6 +367,8 @@ public class WorldGenerator : MonoBehaviour
 
         StartCoroutine(BuildNavmesh(terrain.GetComponent<NavMeshSurface>()));
 
+		IsGenerating = false;
+
     }
 
     // called by startcoroutine whenever you want to build the navmesh
@@ -384,7 +394,7 @@ public class WorldGenerator : MonoBehaviour
         // wait until the navmesh has finished baking
         yield return asyncop;
 
-        Debug.Log("finished");
+        //Debug.Log("finished");
 
         // you need to save the baked data back into the surface
         surface.navMeshData = data;
@@ -399,6 +409,8 @@ public class WorldGenerator : MonoBehaviour
             if (Application.isPlaying) npc.SetNewRandomTarget();
 
         }
+
+		
     }
 
     // creates the navmesh data
@@ -406,9 +418,9 @@ public class WorldGenerator : MonoBehaviour
     {
         var emptySources = new List<NavMeshBuildSource>();
         var emptyBounds = new Bounds();
-        Debug.Log(surface);
-        Debug.Log(emptySources);
-        Debug.Log(emptyBounds);
+        // Debug.Log(surface);
+        // Debug.Log(emptySources);
+        // Debug.Log(emptyBounds);
 
         return NavMeshBuilder.BuildNavMeshData(surface.GetBuildSettings(), emptySources, emptyBounds, surface.transform.position, surface.transform.rotation);
     }
@@ -452,9 +464,9 @@ public class WorldGenerator : MonoBehaviour
     float GetWorldYAtWorldXZ(float x, float z)
     {
         float height = 0f;
-        Debug.Log("x - terrain.transform.position.x : " + (x - terrain.transform.position.x));
+        //Debug.Log("x - terrain.transform.position.x : " + (x - terrain.transform.position.x));
         int hmRes = terrain.terrainData.heightmapResolution;
-        int hmX = hmRes * (int)(x - terrain.transform.position.x) / terrainSizeXZ; Debug.Log("hmX : " + hmX);
+        int hmX = hmRes * (int)(x - terrain.transform.position.x) / terrainSizeXZ; //Debug.Log("hmX : " + hmX);
         int hmY = hmRes * (int)(z - terrain.transform.position.z) / terrainSizeXZ;
         if (hmX >= hmRes || hmX < 0 || hmY >= hmRes || hmY < 0) return 0;
         height = terrain.terrainData.GetHeight(hmX, hmY) + terrain.transform.position.y;

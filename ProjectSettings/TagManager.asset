@@ -7,6 +7,7 @@ TagManager:
   - Water
   - Fire
   - Bounds
+  - NPC
   layers:
   - Default
   - TransparentFX
