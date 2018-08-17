@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 170076734}
-  m_IndirectSpecularColor: {r: 0.71100837, g: 0.45562238, b: 0.2947867, a: 1}
+  m_IndirectSpecularColor: {r: 0.71100837, g: 0.47351873, b: 0.29351377, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -728,7 +728,7 @@ MonoBehaviour:
   - {fileID: 929018082}
   - {fileID: 904543650}
   - {fileID: 477779835}
-  maxPitchIndex: 1
+  maxPitchIndex: 8
 --- !u!1 &78069555
 GameObject:
   m_ObjectHideFlags: 0
@@ -867,7 +867,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1600, y: 1024}
+  m_ReferenceResolution: {x: 960, y: 600}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -2062,7 +2062,7 @@ MonoBehaviour:
   - {fileID: 1492876931}
   - {fileID: 264783151}
   - {fileID: 738376559}
-  maxPitchIndex: 1
+  maxPitchIndex: 8
 --- !u!1001 &231274830
 Prefab:
   m_ObjectHideFlags: 0
@@ -2333,7 +2333,7 @@ MonoBehaviour:
   terrain: {fileID: 1685476717}
   waterPP: {fileID: 11400000, guid: 39bda6b88fa29b34a8e3a36b8951f28c, type: 2}
   mainPP: {fileID: 11400000, guid: ede6cc2e15fd17646bc1ce99dd5c03db, type: 2}
-  useNPC: 1
+  useNPC: 0
   NPCs:
   - {fileID: 1243390546}
   - {fileID: 317285066}
@@ -2348,7 +2348,7 @@ MonoBehaviour:
   - {fileID: 279601851}
   - {fileID: 1125727569}
   minMusicAmount: 2
-  maxMusicAmount: 6
+  maxMusicAmount: 4
   skySaturation: 0.5
   skyValue: 0.75
   ruinsPrefabs:
@@ -2363,9 +2363,9 @@ MonoBehaviour:
   lightAngleOrigin: 30
   lightAngleAmplitude: 20
   hueShiftAmplitude: 180
-  temperatureAmplitude: 33
-  temperatureOrigin: 22
-  tintAmplitude: 22
+  temperatureAmplitude: 22
+  temperatureOrigin: 11
+  tintAmplitude: 11
   saturationAmplitude: 0.5
   saturationOrigin: 0.5
   terrainSizeXZ: 1000
@@ -4375,7 +4375,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &404683001
 Transform:
   m_ObjectHideFlags: 0
@@ -10566,7 +10566,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -3.4, y: -13.1}
+  m_AnchoredPosition: {x: -4.13, y: -13.6}
   m_SizeDelta: {x: 120, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1253608946
@@ -12148,7 +12148,7 @@ MonoBehaviour:
   m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 1600, y: 1024}
+  m_ReferenceResolution: {x: 960, y: 600}
   m_ScreenMatchMode: 0
   m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
@@ -12786,7 +12786,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 1280, y: 819.2}
+  m_SizeDelta: {x: 768, y: 480}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1798764912
 MonoBehaviour:
