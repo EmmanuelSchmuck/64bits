@@ -21,6 +21,8 @@ public class AudioGroup : MonoBehaviour
 
     public AudioSource[] sources;
 
+    public float[] volumeFactors;
+
 	public int maxPitchIndex = 8;
 
     // Use this for initialization
@@ -48,7 +50,7 @@ public class AudioGroup : MonoBehaviour
 
 		  for (int i = 0; i < sources.Length; i++)
         {
-            sources[i].volume = volume;
+            sources[i].volume = volume * volumeFactors[i];
         }
 
 	}

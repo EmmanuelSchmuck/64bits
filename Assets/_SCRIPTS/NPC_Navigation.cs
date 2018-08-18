@@ -15,6 +15,8 @@ public class NPC_Navigation : MonoBehaviour
 
     public float randomWalkRadius = 20f;
 
+    public bool useNavmesh{get; set;}
+
     void Awake(){
 
         // navmeshAgent = GetComponent<NavMeshAgent>();
@@ -26,8 +28,8 @@ public class NPC_Navigation : MonoBehaviour
     void Start()
     { 
         
-		AdjustPosition();
-        navmeshAgent.enabled = true;
+		//AdjustPosition();
+        //navmeshAgent.enabled = true;
         //SetNewRandomTarget();
     }
 
@@ -36,13 +38,17 @@ public class NPC_Navigation : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(transform.position + Vector3.up * 500f, Vector3.down, out hit, 1000f, groundMask))
         {
-            float altitude = hit.point.y + 2f;
+            float altitude = hit.point.y + 3f;
             transform.position = new Vector3(transform.position.x, altitude, transform.position.z);
+    
         }
         else
         {
             Debug.LogError("NPC : adjust position : raycast failed");
         }
+
+        if(!useNavmesh) return;
+ 
 
 		NavMeshHit hit2;
         if (NavMesh.SamplePosition(transform.position, out hit2, samplingDistance, walkableLayer))
@@ -71,7 +77,7 @@ public class NPC_Navigation : MonoBehaviour
     void Update()
     {
 
-        if (navmeshAgent.remainingDistance < 0.5f) SetNewRandomTarget();
+        if (useNavmesh && navmeshAgent.remainingDistance < 0.5f) SetNewRandomTarget();
 
     }
 }

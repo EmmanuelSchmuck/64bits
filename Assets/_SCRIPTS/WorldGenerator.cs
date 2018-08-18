@@ -13,6 +13,9 @@ public class WorldGenerator : MonoBehaviour
     public AudioGroup audioRegular, audioAlternate;
 
     public Material sky;
+
+    public Material waterMat;
+    public LazyClouds clouds;
     public GameObject temple;
 
     public Transform playerSpawn;
@@ -24,7 +27,7 @@ public class WorldGenerator : MonoBehaviour
     public PostProcessingProfile waterPP;
     public PostProcessingProfile mainPP;
 
-    public bool useNPC;
+    public bool useNavmesh;
     public NPC_Navigation[] NPCs;
 
     [Header("Music")]
@@ -32,11 +35,23 @@ public class WorldGenerator : MonoBehaviour
     public int minMusicAmount = 2;
     public int maxMusicAmount = 4;
 
+    [Header("Water")]
+
+    public float waterSaturation;
+    public float waterValue;
+    public float waterAlpha;
+
 
     [Header("Sky")]
 
     public float skySaturation;
     public float skyValue;
+
+    public float skyThicknessOrigin;
+    public float skyThicknessAmplitude;
+
+    public float cloudIntensityOrigin;
+    public float cloudIntensityAmplitude;
 
 
     [Header("Ruins")]
@@ -100,15 +115,6 @@ public class WorldGenerator : MonoBehaviour
 
     public bool generate;
 
-    public bool moveTemple;
-    public bool movePlayer;
-    public bool moveWater;
-    public bool animateCameraResolution;
-
-    public bool modifyPP;
-
-    public bool modifyLight;
-
     private AsyncOperation asyncop;
 
     private Vector3 terrainSizeOverride;
@@ -151,7 +157,7 @@ public class WorldGenerator : MonoBehaviour
 
         GameObject player = GameObject.FindWithTag("Player");
 
-        if (Application.isPlaying && animateCameraResolution)
+        if (Application.isPlaying)
         {
             //Debug.Log("Triggering camera effect...");
             player.GetComponentInChildren<CameraResolutionManager>().TriggerEvolution(gameStart);
@@ -173,46 +179,48 @@ public class WorldGenerator : MonoBehaviour
         {
             int musicIndex = musicIndexes[Random.Range(0, musicIndexes.Count)];
             musicIndexes.Remove(musicIndex);
-            
+
             audioRegular.SetupMusic(musicIndex, pitchIndex);
             audioAlternate.SetupMusic(musicIndex, pitchIndex);
         }
 
 
-        if (modifyPP)
-        {
-            float hueshift = hueShiftAmplitude * Random.Range(-1f, 1f);
-            float saturation = saturationOrigin + saturationAmplitude * Random.Range(-1f, 1f);
-            float temperature = temperatureOrigin + temperatureAmplitude * Random.Range(-1f, 1f);
-            float tint = tintAmplitude * Random.Range(-1f, 1f);
-            ColorGradingModel.Settings colorGradingWater = waterPP.colorGrading.settings;
-            ColorGradingModel.Settings colorGradingMain = mainPP.colorGrading.settings;
+        float hueshift = hueShiftAmplitude * Random.Range(-1f, 1f);
+        float saturation = saturationOrigin + saturationAmplitude * Random.Range(-1f, 1f);
+        float temperature = temperatureOrigin + temperatureAmplitude * Random.Range(-1f, 1f);
+        float tint = tintAmplitude * Random.Range(-1f, 1f);
+        ColorGradingModel.Settings colorGradingWater = waterPP.colorGrading.settings;
+        ColorGradingModel.Settings colorGradingMain = mainPP.colorGrading.settings;
 
-            colorGradingWater.basic.hueShift = hueshift;
-            colorGradingWater.basic.saturation = saturation;
-            colorGradingWater.basic.temperature = temperature;
-            colorGradingWater.basic.tint = tint;
+        colorGradingWater.basic.hueShift = hueshift;
+        colorGradingWater.basic.saturation = saturation;
+        colorGradingWater.basic.temperature = temperature;
+        colorGradingWater.basic.tint = tint;
 
-            colorGradingMain.basic.hueShift = hueshift;
-            colorGradingMain.basic.saturation = saturation;
-            colorGradingMain.basic.temperature = temperature;
-            colorGradingMain.basic.tint = tint;
+        colorGradingMain.basic.hueShift = hueshift;
+        colorGradingMain.basic.saturation = saturation;
+        colorGradingMain.basic.temperature = temperature;
+        colorGradingMain.basic.tint = tint;
 
-            waterPP.colorGrading.settings = colorGradingWater;
-            mainPP.colorGrading.settings = colorGradingMain;
+        waterPP.colorGrading.settings = colorGradingWater;
+        mainPP.colorGrading.settings = colorGradingMain;
 
-        }
 
-        if (modifyLight)
-        {
-            float azimuth = Random.Range(0f, 360f);
-            float ascension = lightAngleOrigin + lightAngleAmplitude * Random.Range(-1f, 1f);
-            sunLight.transform.rotation = Quaternion.Euler(ascension, azimuth, 0f);
-        }
+        float azimuth = Random.Range(0f, 360f);
+        float ascension = lightAngleOrigin + lightAngleAmplitude * Random.Range(-1f, 1f);
+        sunLight.transform.rotation = Quaternion.Euler(ascension, azimuth, 0f);
+
+
+        // sky ============================
 
         Color skyColor = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue, skyValue);
+        float atmosphereThickness = skyThicknessOrigin + skyThicknessAmplitude * Random.Range(-1f, 1f);
 
         sky.SetColor("_SkyTint", skyColor);
+        sky.SetFloat("_AtmosphereThickness", atmosphereThickness);
+
+        float cloudIntensity = cloudIntensityOrigin + cloudIntensityAmplitude * Random.Range(-1f, 1f);
+        clouds.LS_CloudIntensity = cloudIntensity;
 
 
         hmPerlinSeed = new Vector2Int(Random.Range(0, 999), Random.Range(0, 999));
@@ -221,6 +229,14 @@ public class WorldGenerator : MonoBehaviour
         detPerlinSeed2 = new Vector2Int(Random.Range(0, 999), Random.Range(0, 999));
 
         int heightCurveIndex = Random.Range(0, radialHeightFactor.Length);
+
+        // water
+
+        Color waterColor = Random.ColorHSV(0f, 1f, waterSaturation, waterSaturation, waterValue, waterValue);
+        waterColor.a = waterAlpha;
+
+        waterMat.SetColor("_BaseColor", waterColor);
+        //waterMat.SetColor("_BaseColor", waterColor);
 
 
         // Debug.Log("Generating heightmap...");
@@ -325,30 +341,23 @@ public class WorldGenerator : MonoBehaviour
         terrain.terrainData.SetDetailLayer(0, 0, 0, detailMap0);
         terrain.terrainData.SetDetailLayer(0, 0, 1, detailMap1);
 
-        if (moveTemple)
-        {
-            //Debug.Log("Placing temple...");
 
-            float templeHeight = 0f + terrain.terrainData.GetHeight(heightMapWidth / 2, heightMapWidth / 2);
-            Vector3 position = terrainCenterWorldPos + Vector3.up * templeHeight;
-            temple.transform.position = position;
-        }
+        //Debug.Log("Placing temple...");
 
-        if (movePlayer)
-        {
-            //Debug.Log("Placing player...");
+        float templeHeight = 0f + terrain.terrainData.GetHeight(heightMapWidth / 2, heightMapWidth / 2);
+        Vector3 position = terrainCenterWorldPos + Vector3.up * templeHeight;
+        temple.transform.position = position;
 
-            player.transform.position = playerSpawn.position;
-        }
+        //Debug.Log("Placing player...");
 
-        if (moveWater)
-        {
-            //Debug.Log("Placing water...");
+        player.transform.position = playerSpawn.position;
 
-            float waterHeight = waterHeightNormalized * terrainSizeOverride.y;
-            Vector3 position = terrainCenterWorldPos + Vector3.up * waterHeight;
-            water.transform.position = position;
-        }
+        //Debug.Log("Placing water...");
+
+        float waterHeight = waterHeightNormalized * terrainSizeOverride.y;
+        position = terrainCenterWorldPos + Vector3.up * waterHeight;
+        water.transform.position = position;
+
 
         int snowDensityIndex = Random.Range(0, snowDensities.Length);
         snow.maxParticles = snowDensities[snowDensityIndex];
@@ -363,9 +372,9 @@ public class WorldGenerator : MonoBehaviour
 
         for (int i = 0; i < ruinAmount; i++)
         {
-            float azimuth = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            azimuth = Random.Range(0f, 360f) * Mathf.Deg2Rad;
             float distance = Mathf.Lerp(minDistanceNormalized, maxDistanceNormalized, (float)i / (ruinAmount - 1));
-            Vector3 position = new Vector3(distance * Mathf.Cos(azimuth), 0f, distance * Mathf.Sin(azimuth));
+            position = new Vector3(distance * Mathf.Cos(azimuth), 0f, distance * Mathf.Sin(azimuth));
             //position.y = terrain.terrainData.GetHeight((int)position.x, (int)position.z);
             position.x = position.x * terrainSizeOverride.x * 0.5f + terrainCenterWorldPos.x;
             position.z = position.z * terrainSizeOverride.z * 0.5f + terrainCenterWorldPos.z;
@@ -373,14 +382,15 @@ public class WorldGenerator : MonoBehaviour
             Quaternion rotation = Quaternion.Euler(0f, Random.Range(0, 360), 0f);
             GameObject ruin = Instantiate(ruinPrebab, position, rotation, instancedObjects);
         }
-        
+
         for (int i = 0; i < NPCs.Length; i++)
         {
-            NPCs[i].gameObject.SetActive(useNPC);
-           
-            float azimuth = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            NPCs[i].gameObject.SetActive(true);
+            NPCs[i].useNavmesh = useNavmesh;
+
+            azimuth = Random.Range(0f, 360f) * Mathf.Deg2Rad;
             float distance = Mathf.Lerp(minDistanceNormalized, maxDistanceNormalized, (float)i / (NPCs.Length - 1));
-            Vector3 position = new Vector3(distance * Mathf.Cos(azimuth), 0f, distance * Mathf.Sin(azimuth));
+            position = new Vector3(distance * Mathf.Cos(azimuth), 0f, distance * Mathf.Sin(azimuth));
             //position.y = terrain.terrainData.GetHeight((int)position.x, (int)position.z);
             position.x = position.x * terrainSizeOverride.x * 0.5f + terrainCenterWorldPos.x;
             position.z = position.z * terrainSizeOverride.z * 0.5f + terrainCenterWorldPos.z;
@@ -388,10 +398,11 @@ public class WorldGenerator : MonoBehaviour
             //Quaternion rotation = Quaternion.Euler(0f, Random.Range(0, 360), 0f);
             //GameObject ruin = Instantiate(ruinPrebab, position, rotation, instancedObjects);
             NPCs[i].transform.position = position;
+            if (!useNavmesh) NPCs[i].AdjustPosition();
         }
 
-        if(useNPC) StartCoroutine(BuildNavmesh(terrain.GetComponent<NavMeshSurface>()));
-        
+        if (useNavmesh) StartCoroutine(BuildNavmesh(terrain.GetComponent<NavMeshSurface>()));
+
 
         IsGenerating = false;
 
@@ -400,6 +411,8 @@ public class WorldGenerator : MonoBehaviour
     // called by startcoroutine whenever you want to build the navmesh
     IEnumerator BuildNavmesh(NavMeshSurface surface)
     {
+
+        Debug.Log("building navmesh");
 
         foreach (NPC_Navigation npc in NPCs)
         {
