@@ -22,14 +22,13 @@ public class PlayerController : MonoBehaviour
     public Transform camera;
 
     public Color waterFogColor;
-    private Color baseFogColor;
     private bool underwater;
 
     // Use this for initialization
     void Start()
     {
 
-        baseFogColor = RenderSettings.fogColor;
+        //baseFogColor = RenderSettings.fogColor;
 
     }
 
@@ -60,7 +59,7 @@ public class PlayerController : MonoBehaviour
         {
             underwater = true;
             ppManager.OnEnteringWater();
-            RenderSettings.fogColor = waterFogColor;
+            //RenderSettings.fogColor = waterFogColor;
             audioRegular.SetAudioMixerGroup(audioUnderwater);
             audioAlternate.SetAudioMixerGroup(audioUnderwater);
         }
@@ -68,10 +67,14 @@ public class PlayerController : MonoBehaviour
         {
             underwater = false;
             ppManager.OnExitingWater();
-            RenderSettings.fogColor = baseFogColor;
+            //RenderSettings.fogColor = WorldGenerator.Instance.currentFogColor;
             audioRegular.SetAudioMixerGroup(audioMaster);
             audioAlternate.SetAudioMixerGroup(audioMaster);
         }
+
+        //debug :
+
+        if(Input.GetKeyDown(KeyCode.U)) transform.position += Vector3.up * 100;
     }
 
     private float map(float s, float a1, float a2, float b1, float b2)

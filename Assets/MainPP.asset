@@ -121,16 +121,16 @@ MonoBehaviour:
         neutralWhiteClip: 10
       basic:
         postExposure: 1
-        temperature: 0
-        tint: 0
-        hueShift: -57.046143
-        saturation: 0.7095944
-        contrast: 1.277
+        temperature: -4.9760733
+        tint: -0.7979077
+        hueShift: -135
+        saturation: 0.6
+        contrast: 1.4
       channelMixer:
         red: {x: 1, y: 0, z: 0}
         green: {x: 0, y: 1, z: 0}
         blue: {x: 0, y: 0, z: 1}
-        currentEditingChannel: 0
+        currentEditingChannel: 2
       colorWheels:
         mode: 1
         log:
@@ -322,9 +322,9 @@ MonoBehaviour:
       mode: 0
       color: {r: 0, g: 0, b: 0, a: 1}
       center: {x: 0.5, y: 0.5}
-      intensity: 0.384
-      smoothness: 0.302
-      roundness: 1
+      intensity: 0.549
+      smoothness: 0.471
+      roundness: 0.448
       mask: {fileID: 0}
       opacity: 1
       rounded: 0

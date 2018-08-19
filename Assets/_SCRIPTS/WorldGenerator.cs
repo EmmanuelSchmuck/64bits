@@ -44,8 +44,12 @@ public class WorldGenerator : MonoBehaviour
 
     [Header("Sky")]
 
+    public float hueDiffMin;
+    public float hueDiffMax = 0.5f;
     public float skySaturation;
-    public float skyValue;
+    public float skyValueMin, skyValueMax;
+    public float horizonSaturation;
+    public float horizonValueMin, horizonValueMax;
 
     public float skyThicknessOrigin;
     public float skyThicknessAmplitude;
@@ -53,7 +57,7 @@ public class WorldGenerator : MonoBehaviour
     public float cloudIntensityOrigin;
     public float cloudIntensityAmplitude;
 
-    
+
     public float cloudThicknessOrigin;
     public float cloudThicknessAmplitude;
 
@@ -75,15 +79,19 @@ public class WorldGenerator : MonoBehaviour
     public float lightAngleOrigin;
     public float lightAngleAmplitude;
 
+    public float lightIntensityMin;
+    public float lightIntensityMax;
+
 
     [Header("Colors")]
 
-    public float hueShiftAmplitude;
-    public float temperatureAmplitude;
-    public float temperatureOrigin;
-    public float tintAmplitude;
-    public float saturationAmplitude;
-    public float saturationOrigin;
+    public float[] hueshiftValues;
+    public float[] temperatureValues;
+    public float[] tintValues;
+    // public float saturationAmplitude;
+    // public float saturationOrigin;
+
+    public float[] saturationValues;
 
     [Header("HeightMap")]
 
@@ -101,9 +109,10 @@ public class WorldGenerator : MonoBehaviour
     public float hmHarmonicFactor = 0.5f;
 
     [Header("AlphaMap")]
+
+    public float rockyWorldProbability;
     public float waterTextHeightOffset = 10;
     public float smoothingHeight = 20;
-    public float snowAltitude = 100;
 
     [Header("DetailMap")]
     public int grassDensity = 1;
@@ -125,6 +134,8 @@ public class WorldGenerator : MonoBehaviour
 
     public bool IsGenerating { get; set; }
 
+    public Color currentFogColor { get; set; }
+
     public static WorldGenerator Instance;
 
     void Awake() => Instance = this;
@@ -142,6 +153,7 @@ public class WorldGenerator : MonoBehaviour
 
     public void StartGeneration(int seed, bool gameStart = false)
     {
+        if(IsGenerating) return;
         StopAllCoroutines();
 
         StartCoroutine(Generate(seed, gameStart));
@@ -151,6 +163,7 @@ public class WorldGenerator : MonoBehaviour
 
     private IEnumerator Generate(int seed, bool gameStart)
     {
+        
         Debug.Log("GENERATING WITH SEED = " + seed);
         IsGenerating = true;
 
@@ -190,10 +203,10 @@ public class WorldGenerator : MonoBehaviour
         }
 
 
-        float hueshift = hueShiftAmplitude * Random.Range(-1f, 1f);
-        float saturation = saturationOrigin + saturationAmplitude * Random.Range(-1f, 1f);
-        float temperature = temperatureOrigin + temperatureAmplitude * Random.Range(-1f, 1f);
-        float tint = tintAmplitude * Random.Range(-1f, 1f);
+        float hueshift = hueshiftValues[Random.Range(0, hueshiftValues.Length)];
+        float saturation = saturationValues[Random.Range(0, saturationValues.Length)];
+        float temperature = temperatureValues[Random.Range(0, temperatureValues.Length)];
+        float tint = tintValues[Random.Range(0, tintValues.Length)];
         ColorGradingModel.Settings colorGradingWater = waterPP.colorGrading.settings;
         ColorGradingModel.Settings colorGradingMain = mainPP.colorGrading.settings;
 
@@ -214,23 +227,37 @@ public class WorldGenerator : MonoBehaviour
         float azimuth = Random.Range(0f, 360f);
         float ascension = lightAngleOrigin + lightAngleAmplitude * Random.Range(-1f, 1f);
         sunLight.transform.rotation = Quaternion.Euler(ascension, azimuth, 0f);
+        float timeOfDayFactor = (ascension - (lightAngleOrigin - lightAngleAmplitude)) / (2 * lightAngleAmplitude);
+        sunLight.GetComponent<Light>().intensity = Mathf.Lerp(lightIntensityMin, lightIntensityMax, timeOfDayFactor);
+
+        float skyValue = Mathf.Lerp(skyValueMin, skyValueMax, timeOfDayFactor);
+        float horizonValue = Mathf.Lerp(horizonValueMin, horizonValueMax, timeOfDayFactor);
+        //Debug.Log("timeOfDayFactor = " + timeOfDayFactor);
 
 
         // sky ============================
-
-        Color skyColor1 = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue, skyValue);
-        Color skyColor2 = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue*0.7f, skyValue*0.7f);
+        float hue1 = Random.Range(0f,1f);
+        float hueDelta = Mathf.Lerp(hueDiffMin, hueDiffMax, Random.value);
+        float hue2 = (hue1 + hueDelta) % 1f;
+        Color skyColor1 = Color.HSVToRGB(hue1, skySaturation, skyValue);
+        Color skyColor2 = Color.HSVToRGB(hue2, horizonSaturation, horizonValue);
+        sunLight.GetComponent<Light>().color = skyColor1;
         //float atmosphereThickness = skyThicknessOrigin + skyThicknessAmplitude * Random.Range(-1f, 1f);
 
         sky.SetColor("_Color1", skyColor1);
         sky.SetColor("_Color2", skyColor2);
-        RenderSettings.fogColor = skyColor2 * 0.9f;
+        //RenderSettings.fog = false;
+        RenderSettings.fogColor = skyColor2;
+        currentFogColor = skyColor2;
+        //RenderSettings.fog = true;
+
+        Debug.Log("horizon color : " + skyColor2 + " // fog color : " + RenderSettings.fogColor);
         //sky.SetFloat("_AtmosphereThickness", atmosphereThickness);
 
         float cloudIntensity = cloudIntensityOrigin + cloudIntensityAmplitude * Random.Range(-1f, 1f);
         clouds.LS_CloudIntensity = cloudIntensity;
 
-        float cloudThickness = cloudThicknessOrigin + cloudThicknessAmplitude * Random.Range(-1f,1f);
+        float cloudThickness = cloudThicknessOrigin + cloudThicknessAmplitude * Random.Range(-1f, 1f);
         clouds.LS_CloudThickness = cloudThickness;
 
 
@@ -281,43 +308,42 @@ public class WorldGenerator : MonoBehaviour
         //Debug.Log("Generating alpha map...");
 
         int alphaMapWidth = terrain.terrainData.alphamapWidth;
-        int alphaTextureCount = 3;
+        int alphaTextureCount = 4;
 
         float[,,] alphaMap = new float[alphaMapWidth, alphaMapWidth, alphaTextureCount];
         float waterTexHeight = waterHeightNormalized * terrainSizeOverride.y + waterTextHeightOffset;
         float baseTextureHeight = waterTexHeight + smoothingHeight;
+        bool rockyWorld = Random.value < rockyWorldProbability;
+        int waterIndex = rockyWorld ? 3 : 1;
+        int groundIndex = rockyWorld ? 2 : 0;
+        int unused1 = rockyWorld ? 0 : 2;
+        int unused2 = rockyWorld ? 1 : 3;
 
         for (int x = 0; x < alphaMapWidth; x++)
         {
             for (int y = 0; y < alphaMapWidth; y++)
             {
                 float height = heightMap[x, y] * terrainSizeOverride.y;
-                if (height > snowAltitude)
+
+                alphaMap[x, y, unused1] = 0;
+                alphaMap[x, y, unused2] = 0;
+
+                if (height < waterTexHeight)
                 {
-                    alphaMap[x, y, 0] = 0;
-                    alphaMap[x, y, 1] = 0;
-                    alphaMap[x, y, 2] = 1;
+                    alphaMap[x, y, groundIndex] = 0;
+                    alphaMap[x, y, waterIndex] = 1;
+                }
+                else if (height > baseTextureHeight)
+                {
+                    alphaMap[x, y, groundIndex] = 1;
+                    alphaMap[x, y, waterIndex] = 0;
                 }
                 else
                 {
-                    alphaMap[x, y, 2] = 0;
-
-                    if (height < waterTexHeight)
-                    {
-                        alphaMap[x, y, 0] = 0;
-                        alphaMap[x, y, 1] = 1;
-                    }
-                    else if (height > baseTextureHeight)
-                    {
-                        alphaMap[x, y, 0] = 1;
-                        alphaMap[x, y, 1] = 0;
-                    }
-                    else
-                    {
-                        alphaMap[x, y, 0] = (height - waterTexHeight) / smoothingHeight;
-                        alphaMap[x, y, 1] = 1f - (height - waterTexHeight) / smoothingHeight;
-                    }
+                    alphaMap[x, y, groundIndex] = (height - waterTexHeight) / smoothingHeight;
+                    alphaMap[x, y, waterIndex] = 1f - (height - waterTexHeight) / smoothingHeight;
                 }
+
             }
         }
 
