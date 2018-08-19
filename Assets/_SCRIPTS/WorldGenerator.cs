@@ -53,6 +53,10 @@ public class WorldGenerator : MonoBehaviour
     public float cloudIntensityOrigin;
     public float cloudIntensityAmplitude;
 
+    
+    public float cloudThicknessOrigin;
+    public float cloudThicknessAmplitude;
+
 
     [Header("Ruins")]
     public GameObject[] ruinsPrefabs;
@@ -172,6 +176,7 @@ public class WorldGenerator : MonoBehaviour
         audioRegular.StopAll();
         //audioRegular.StopAll();
 
+
         List<int> musicIndexes = new List<int>() { 0, 1, 2, 3, 4, 5, 6 };
         int musicAmount = Random.Range(minMusicAmount, maxMusicAmount + 1);
         int pitchIndex = Random.Range(0, audioRegular.maxPitchIndex);
@@ -213,14 +218,20 @@ public class WorldGenerator : MonoBehaviour
 
         // sky ============================
 
-        Color skyColor = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue, skyValue);
-        float atmosphereThickness = skyThicknessOrigin + skyThicknessAmplitude * Random.Range(-1f, 1f);
+        Color skyColor1 = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue, skyValue);
+        Color skyColor2 = Random.ColorHSV(0f, 1f, skySaturation, skySaturation, skyValue*0.7f, skyValue*0.7f);
+        //float atmosphereThickness = skyThicknessOrigin + skyThicknessAmplitude * Random.Range(-1f, 1f);
 
-        sky.SetColor("_SkyTint", skyColor);
-        sky.SetFloat("_AtmosphereThickness", atmosphereThickness);
+        sky.SetColor("_Color1", skyColor1);
+        sky.SetColor("_Color2", skyColor2);
+        RenderSettings.fogColor = skyColor2 * 0.9f;
+        //sky.SetFloat("_AtmosphereThickness", atmosphereThickness);
 
         float cloudIntensity = cloudIntensityOrigin + cloudIntensityAmplitude * Random.Range(-1f, 1f);
         clouds.LS_CloudIntensity = cloudIntensity;
+
+        float cloudThickness = cloudThicknessOrigin + cloudThicknessAmplitude * Random.Range(-1f,1f);
+        clouds.LS_CloudThickness = cloudThickness;
 
 
         hmPerlinSeed = new Vector2Int(Random.Range(0, 999), Random.Range(0, 999));
